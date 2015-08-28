@@ -1,12 +1,12 @@
 'use strict';
 
-var username = "allanyu",
-    projectName = "allinone5",
+var username = "",
+    projectName = "",
     domain = 'http://wapstatic.kf0309.3g.qq.com/';
 
 var enableConfig = {
-    px2rem: true, // �Ƿ�����pxת��rem
-    imgresize: true // �Ƿ���2xͼ����1xͼ
+    px2rem: true, // 是否将px转换为rem
+    imgresize: true // 是否根据2x图生成1x
 };
 
 var gulp = require("gulp");
@@ -81,7 +81,7 @@ xgulp.copyFromAppDir = (function () {
     appendItems(copyFiles, xgulp.fontDir);
     appendItems(copyFiles, xgulp.designFiles);
 
-    console.log("copyFiles: ", copyFiles);
+    //console.log("copyFiles: ", copyFiles);
     return copyFiles;
 })();
 
@@ -199,8 +199,8 @@ gulp.task("default", function () {
 gulp.task("cdn", ['build'], function () {
     return gulp.src(xgulp.publishFiles).pipe(plugins.cdnUpload({
         domain: 'http://3gimg.qq.com/mig-web',
-        remoteDir: '/2015/market/allanyu/gulp-demo',  //CDN·������Ҫ�������ļ�������
-        uploadUrl: 'http://super.kf0309.3g.qq.com/qm/upload',       //CDN��ת��ַ��CDN��HTTP�ӿ�ֻ����IDC��Ⱥ�е�IP����Ȩ��
+        remoteDir: '/2015/market/allanyu/gulp-demo',  //CDN远程路径
+        uploadUrl: 'http://super.kf0309.3g.qq.com/qm/upload',
         publishDir: 'publish'
     })).pipe(gulp.dest(xgulp.publishDir));
 });
