@@ -5,13 +5,14 @@ var username = "allanyu",
     domain = 'http://wapstatic.kf0309.3g.qq.com/';
 
 var enableConfig = {
-    px2rem: true, // ÊÇ·ñÆôÓÃpx×ª³Érem
-    imgresize: true // ÊÇ·ñ¿ªÆô2xÍ¼Éú³É1xÍ¼
+    px2rem: true, // ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½px×ªï¿½ï¿½rem
+    imgresize: true // ï¿½Ç·ï¿½ï¿½ï¿½2xÍ¼ï¿½ï¿½ï¿½ï¿½1xÍ¼
 };
 
 var gulp = require("gulp");
 var gulpif = require('gulp-if');
 var gutil = require('gulp-util');
+var path = require('path');
 var plugins = require('gulp-load-plugins')({
     pattern: ['gulp-*', 'gulp.*', 'del'],
     scope: ['dependencies', 'devDependencies'],
@@ -33,34 +34,78 @@ var isOptmized = argv.o !== undefined || argv.optimized !== undefined,
     isWatch = argv.w !== undefined || argv.watch !== undefined,
     useFont = argv.f !== undefined || argv.font !== undefined;
 
-var copyFromAppDir = [
-    'src/**/*.html',
-    'src/css/**/*.css',
-    'src/js/**/*.*',
-    'src/img/**/*.*',
-    "!src/base64/*.*"
-];
+var xgulp = {
+    htmlFiles: ['*.html', 'html/*.html'],
+    publishHtmls: ['publish/*.html', 'publish/html/*.html'],
 
-if (!isOptmized)  copyFromAppDir.push('src/slice/**');
+    cssFiles: ['css/**/*.css'],
+    styleFiles: ['css/**/*.css', 'css/*.less', '!css/lib/', '!css/mixins/'],
+    cssDest: 'publish/css',
+
+    jsFiles: ['js/**/*.js'],
+    jsDest: 'publish/js',
+
+    imgFiles: 'img/**/*.*',
+    imgDest: 'publish/img',
+    img2xDir: "**/*@2x.png",
+    sliceDir: 'slice/**',
+    spriteDest: 'publish/sprite',
+
+    publishDir: 'publish/',
+    publishFiles: 'publish/**/*.*',
+
+    fontDir: 'font/',
+    publishFonts: 'publish/font/',
+
+    mailFiles: 'mail/**',
+    mailDir: 'mail/',
+
+    designFiles: 'design/**'
+};
+
+xgulp.copyFromAppDir = (function () {
+    var copyFiles = [];
+
+    function appendItems(arr, toconcat) {
+        if (typeof toconcat === 'string')
+            toconcat = [toconcat];
+        Array.prototype.splice.apply(arr, [arr.length - 1, 0].concat(toconcat));
+    }
+
+    appendItems(copyFiles, xgulp.htmlFiles);
+    appendItems(copyFiles, xgulp.cssFiles);
+    appendItems(copyFiles, xgulp.jsFiles);
+    appendItems(copyFiles, xgulp.imgFiles);
+    if (!isOptmized)
+        appendItems(copyFiles, xgulp.sliceDir);
+    appendItems(copyFiles, xgulp.fontDir);
+    appendItems(copyFiles, xgulp.designFiles);
+
+    console.log("copyFiles: ", copyFiles);
+    return copyFiles;
+})();
 
 // -------------------------------------
 // Tasks
 // -------------------------------------
 
 gulp.task('clean', function (callback) {
-    return plugins.del(['publish/**/*.*'], callback);
+    return plugins.del(xgulp.publishDir, callback);
 });
 
 gulp.task('copy', function () {
-    return gulp.src(copyFromAppDir, {base: 'src'}).pipe(gulp.dest("publish/"));
+    return gulp.src(xgulp.copyFromAppDir, {base: '.'}).pipe(gulp.dest(xgulp.publishDir));
 });
 
 gulp.task('style', function () {
-    return gulp.src(['src/css/*.less', '!src/css/lib/', '!src/css/mixins/'])
-        .pipe(plugins.less())
+    return gulp.src(xgulp.styleFiles)
+        .pipe(gulpif(function (file) {
+            //console.log("path: ", file.path, ", is? ", path.extname(file.path) === '.less');
+            return path.extname(file.path) === '.less'
+        }, plugins.less()))
         .pipe(gulpif(enableConfig.px2rem, plugins.px2rem({replace: true}, {map: true})))
         .pipe(plugins.imageEmbed({
-            asset: 'src/base64',
+            asset: 'base64/',
             include: ['base64']
         }))
         .pipe(plugins.autoprefixer('last 2 versions'))
@@ -68,28 +113,28 @@ gulp.task('style', function () {
         .pipe(gulpif(isOptmized, plugins.tmtsprite({
             margin: 0
         })))
-        .pipe(gulpif("*.png", gulp.dest('publish/sprite'), gulp.dest('publish/css')));
+        .pipe(gulpif("*.png", gulp.dest(xgulp.spriteDest), gulp.dest(xgulp.cssDest)));
 });
 
 gulp.task('imgmin', ['copy'], function () {
-    return gulp.src('src/img')
+    return gulp.src(xgulp.imgFiles)
         .pipe(gulpif(isOptmized, plugins.imagemin({
             // {quality: '80-90', speed: 4}
             use: [pngquant()]
         })))
-        .pipe(gulp.dest('publish/img'));
+        .pipe(gulp.dest(xgulp.imgDest));
 });
 
 gulp.task('spritemin', ['style'], function () {
-    return gulp.src('publish/sprite')
+    return gulp.src(xgulp.spriteDest)
         .pipe(gulpif(isOptmized, plugins.imagemin({
             use: [pngquant()]
         })))
-        .pipe(gulp.dest('publish/sprite'));
+        .pipe(gulp.dest(xgulp.spriteDest));
 });
 
 gulp.task('upload', ['copy', 'style'], function () {
-    return gulp.src("publish/**/*.*")
+    return gulp.src(xgulp.publishFiles)
         .pipe(plugins.fileUpload({
             url: 'http://ued.wsd.com/receiver/receiver.php',
             method: 'POST',
@@ -101,18 +146,17 @@ gulp.task('upload', ['copy', 'style'], function () {
 });
 
 gulp.task('fontspider', function () {
-    return gulp.src(['publish/*.html', 'publish/html/*.html'])
-        .pipe(plugins.fontSpider({
-            backup: false
-        }));
+    return gulp.src(xgulp.publishHtmls).pipe(plugins.fontSpider({
+        backup: false
+    }));
 });
 
 gulp.task("fontreflow", function () {
-    return gulp.src('publish/font/*').pipe(gulp.dest('src'));
+    return gulp.src(xgulp.publishFonts).pipe(xgulp.fontDir);
 });
 
 gulp.task("imgresize", function () {
-    return gulp.src("src/**/*@2x.png").pipe(plugins.imgresize({
+    return gulp.src(xgulp.img2xDir).pipe(plugins.imgresize({
         ratio: 0.5
     }));
 });
@@ -125,8 +169,8 @@ isUpload && buildDepts.push('upload');
 
 gulp.task('build', buildDepts, function () {
     if (isWatch) {
-        gulp.watch(copyFromAppDir, isUpload ? ['copy', 'upload'] : ['copy']);
-        gulp.watch('src/css/**/*.less', isUpload ? ['style', 'upload'] : ['style']);
+        gulp.watch(xgulp.copyFromAppDir, isUpload ? ['copy', 'upload'] : ['copy']);
+        gulp.watch(xgulp.styleFiles, isUpload ? ['style', 'upload'] : ['style']);
         if (isUpload)
             gutil.log("please open: " + (domain + "/" + username + "/" + projectName + "/<your html>"));
     }
@@ -153,10 +197,25 @@ gulp.task("default", function () {
 
 
 gulp.task("cdn", ['build'], function () {
-    gulp.src("publish/**/*.*").pipe(plugins.cdnUpload({
+    return gulp.src(xgulp.publishFiles).pipe(plugins.cdnUpload({
         domain: 'http://3gimg.qq.com/mig-web',
-        remoteDir: '/2015/market/allanyu/gulp-demo',  //CDNÂ·¾¶£¬ÐèÒªÔÚÅäÖÃÎÄ¼þÀïÃæÅâ
-        uploadUrl: 'http://super.kf0309.3g.qq.com/qm/upload',       //CDNÖÐ×ªµØÖ·£¬CDNµÄHTTP½Ó¿ÚÖ»ÄÜÊÇIDC¼¯ÈºÖÐµÄIP²ÅÓÐÈ¨ÏÞ
+        remoteDir: '/2015/market/allanyu/gulp-demo',  //CDNÂ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        uploadUrl: 'http://super.kf0309.3g.qq.com/qm/upload',       //CDNï¿½ï¿½×ªï¿½ï¿½Ö·ï¿½ï¿½CDNï¿½ï¿½HTTPï¿½Ó¿ï¿½Ö»ï¿½ï¿½ï¿½ï¿½IDCï¿½ï¿½Èºï¿½Ðµï¿½IPï¿½ï¿½ï¿½ï¿½È¨ï¿½ï¿½
         publishDir: 'publish'
-    })).pipe(gulp.dest('publish/'));
+    })).pipe(gulp.dest(xgulp.publishDir));
+});
+
+gulp.task('htmllist', ['build'], function () {
+    return gulp.src(xgulp.publishHtmls).pipe(plugins.htmlList({
+        domain: domain,
+        username: username,
+        projectName: projectName
+    }));
+});
+
+gulp.task('mail', function () {
+    gulp.src(xgulp.mailFiles).pipe(gulpif(true, plugins.hbsHtml())).pipe(plugins.sendMail({
+        url: 'http://super.kf0309.3g.qq.com/tofapi/sendmail',
+        apiKey: 'mxdfemk520'
+    })).pipe(gulp.dest(xgulp.mailDir));
 });
