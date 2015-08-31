@@ -1,28 +1,38 @@
 'use strict';
 
-var username = "",
-    projectName = "",
+var username = "luoliang",
+    projectName = "test",
     domain = 'http://wapstatic.kf0309.3g.qq.com/';
 
 var enableConfig = {
-    px2rem: true, // 是否将px转换为rem
-    imgresize: true // 是否根据2x图生成1x
+    px2rem: true, // 启用px转换为rem
+    imgresize: true // 启用从2x图生成1x图
 };
 
 var gulp = require("gulp");
 var gulpif = require('gulp-if');
 var gutil = require('gulp-util');
 var path = require('path');
-var plugins = require('gulp-load-plugins')({
-    pattern: ['gulp-*', 'gulp.*', 'del'],
-    scope: ['dependencies', 'devDependencies'],
-    replaceString: /^gulp(?:\-|\.)/,
-    camelize: true,
-    rename: {'gulp-2x': 'imgresize'}
-});
 var map = require('vinyl-map');
 var pngquant = require('imagemin-pngquant');
 var argv = require("yargs").argv;
+
+// plugins
+var del = require('del');
+var less = require("gulp-less");
+var px2rem = require('gulp-px2rem');
+var imageEmbed = require('gulp-image-embed');
+var autoprefixer = require('gulp-autoprefixer');
+var minifyCss = require('gulp-minify-css');
+var tmtsprite = require('gulp-tmtsprite');
+var imagemin = require('gulp-imagemin');
+var fileUpload = require('gulp-file-upload');
+var fontSpider = require('gulp-font-spider');
+var imgresize = require('gulp-2x');
+var cdnUpload = require('gulp-cdn-upload');
+var htmlList = require('gulp-html-list');
+var hbsHtml = require('gulp-hbs-html');
+var sendMail = require('gulp-send-mail');
 
 if (!username || !projectName) {
     gutil.log(gutil.colors.red("You must setting username and projectName!"));
@@ -45,11 +55,12 @@ var xgulp = {
     jsFiles: ['js/**/*.js'],
     jsDest: 'publish/js',
 
-    imgFiles: 'img/**/*.*',
+    imgFiles: 'img/**',
     imgDest: 'publish/img',
     img2xDir: "**/*@2x.png",
     sliceDir: 'slice/**',
     spriteDest: 'publish/sprite',
+    imgMinFiles: ['publish/img/**/*.png', 'publish/sprite/*.png'],
 
     publishDir: 'publish/',
     publishFiles: 'publish/**/*.*',
@@ -90,7 +101,7 @@ xgulp.copyFromAppDir = (function () {
 // -------------------------------------
 
 gulp.task('clean', function (callback) {
-    return plugins.del(xgulp.publishDir, callback);
+    return del(xgulp.publishDir, callback);
 });
 
 gulp.task('copy', function () {
@@ -102,40 +113,41 @@ gulp.task('style', function () {
         .pipe(gulpif(function (file) {
             //console.log("path: ", file.path, ", is? ", path.extname(file.path) === '.less');
             return path.extname(file.path) === '.less'
-        }, plugins.less()))
-        .pipe(gulpif(enableConfig.px2rem, plugins.px2rem({replace: true}, {map: true})))
-        .pipe(plugins.imageEmbed({
+        }, less()))
+        .pipe(gulpif(enableConfig.px2rem, px2rem({replace: true}, {map: true})))
+        .pipe(imageEmbed({
             asset: 'base64/',
             include: ['base64']
         }))
-        .pipe(plugins.autoprefixer('last 2 versions'))
-        .pipe(gulpif(isOptmized, plugins.minifyCss({advanced: true, compatibility: 'ie8', keepBreaks: false})))
-        .pipe(gulpif(isOptmized, plugins.tmtsprite({
+        .pipe(autoprefixer('last 2 versions'))
+         .pipe(gulpif(isOptmized, minifyCss({advanced: true, compatibility: 'ie8', keepBreaks: false})))
+        .pipe(gulpif(isOptmized, tmtsprite({
             margin: 0
         })))
         .pipe(gulpif("*.png", gulp.dest(xgulp.spriteDest), gulp.dest(xgulp.cssDest)));
 });
 
-gulp.task('imgmin', ['copy'], function () {
-    return gulp.src(xgulp.imgFiles)
-        .pipe(gulpif(isOptmized, plugins.imagemin({
+gulp.task('imgmin', ['copy', 'style'], function () {
+    return gulp.src('img/**')
+        .pipe(gulpif(isOptmized, imagemin({
             // {quality: '80-90', speed: 4}
             use: [pngquant()]
         })))
-        .pipe(gulp.dest(xgulp.imgDest));
+        .pipe(gulp.dest("publish/img"));
 });
 
-gulp.task('spritemin', ['style'], function () {
-    return gulp.src(xgulp.spriteDest)
-        .pipe(gulpif(isOptmized, plugins.imagemin({
+gulp.task('spritemin', ['copy', 'style'], function () {
+    return gulp.src("publish/sprite/**")
+        .pipe(gulpif(isOptmized, imagemin({
+            // {quality: '80-90', speed: 4}
             use: [pngquant()]
         })))
-        .pipe(gulp.dest(xgulp.spriteDest));
+        .pipe(gulp.dest('publish/sprite'));
 });
 
 gulp.task('upload', ['copy', 'style'], function () {
     return gulp.src(xgulp.publishFiles)
-        .pipe(plugins.fileUpload({
+        .pipe(fileUpload({
             url: 'http://ued.wsd.com/receiver/receiver.php',
             method: 'POST',
             to: '/data/wapstatic/' + username + '/',
@@ -146,7 +158,7 @@ gulp.task('upload', ['copy', 'style'], function () {
 });
 
 gulp.task('fontspider', function () {
-    return gulp.src(xgulp.publishHtmls).pipe(plugins.fontSpider({
+    return gulp.src(xgulp.publishHtmls).pipe(fontSpider({
         backup: false
     }));
 });
@@ -156,14 +168,15 @@ gulp.task("fontreflow", function () {
 });
 
 gulp.task("imgresize", function () {
-    return gulp.src(xgulp.img2xDir).pipe(plugins.imgresize({
+    return gulp.src(xgulp.img2xDir).pipe(imgresize({
         ratio: 0.5
     }));
 });
 
 var buildDepts = ['copy', 'style'];
 enableConfig.imgresize && buildDepts.push('imgresize');
-isOptmized && buildDepts.splice.apply(buildDepts, [0, 0].concat(['imgmin', 'spritemin']));
+// 图片压缩现在有问题
+//isOptmized && buildDepts.splice.apply(buildDepts, [0, 0].concat(['spritemin']));
 useFont && buildDepts.push("fontspider");
 isUpload && buildDepts.push('upload');
 
@@ -176,13 +189,38 @@ gulp.task('build', buildDepts, function () {
     }
 });
 
+gulp.task("cdn", ['build'], function () {
+    return gulp.src(xgulp.publishFiles).pipe(cdnUpload({
+        domain: 'http://3gimg.qq.com/mig-web',
+        remoteDir: '/2015/market/allanyu/gulp-demo',
+        uploadUrl: 'http://super.kf0309.3g.qq.com/qm/upload',
+        publishDir: 'publish'
+    })).pipe(gulp.dest(xgulp.publishDir));
+});
+
+gulp.task('htmllist', ['build'], function () {
+    return gulp.src(xgulp.publishHtmls).pipe(htmlList({
+        domain: domain,
+        username: username,
+        projectName: projectName
+    }));
+});
+
+gulp.task('mail', ['htmllist'], function () {
+    gulp.src(xgulp.mailFiles).pipe(gulpif(true, hbsHtml())).pipe(sendMail({
+        url: 'http://super.kf0309.3g.qq.com/tofapi/sendmail',
+        apiKey: 'mxdfemk520'
+    })).pipe(gulp.dest(xgulp.mailDir));
+});
+
 gulp.task("default", function () {
     var red = gutil.colors.red;
     var commander = "\n\r";
     commander += "Usage: gulp <command> \n\r\n\r";
     commander += "Commands: \n\r\n\r";
-    commander += "  build   just build your project \n\r";
-    commander += "  release  just release your project to CDN and send mail \n\r";
+    commander += "  build   构建本地项目, 上传文件到测试环境  \n\r";
+    commander += "  cdn     上传文件到CDN\n\r";
+    commander += "  mail    发送重构待确认邮件\n\r";
     commander += "\n\r\n\r";
 
     commander += "Options: \n\r\n\r";
@@ -193,29 +231,4 @@ gulp.task("default", function () {
     commander += "\n\r\n\r";
 
     gutil.log(red(commander));
-});
-
-
-gulp.task("cdn", ['build'], function () {
-    return gulp.src(xgulp.publishFiles).pipe(plugins.cdnUpload({
-        domain: 'http://3gimg.qq.com/mig-web',
-        remoteDir: '/2015/market/allanyu/gulp-demo',  //CDN远程路径
-        uploadUrl: 'http://super.kf0309.3g.qq.com/qm/upload',
-        publishDir: 'publish'
-    })).pipe(gulp.dest(xgulp.publishDir));
-});
-
-gulp.task('htmllist', ['build'], function () {
-    return gulp.src(xgulp.publishHtmls).pipe(plugins.htmlList({
-        domain: domain,
-        username: username,
-        projectName: projectName
-    }));
-});
-
-gulp.task('mail', function () {
-    gulp.src(xgulp.mailFiles).pipe(gulpif(true, plugins.hbsHtml())).pipe(plugins.sendMail({
-        url: 'http://super.kf0309.3g.qq.com/tofapi/sendmail',
-        apiKey: 'mxdfemk520'
-    })).pipe(gulp.dest(xgulp.mailDir));
 });
