@@ -1,6 +1,6 @@
 {
   "name": "xgulp",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "xgulp is a front-end build tool for mxd",
   "main": "index.js",
   "scripts": {

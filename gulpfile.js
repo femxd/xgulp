@@ -63,7 +63,7 @@ var xgulp = {
     imgMinFiles: ['publish/img/**/*.png', 'publish/sprite/*.png'],
 
     publishDir: 'publish/',
-    publishFiles: 'publish/**/*.*',
+    publishFiles: ['publish/**/*.*', '!publish/design/*.psd'],
 
     fontDir: 'font/',
     publishFonts: 'publish/font/',
