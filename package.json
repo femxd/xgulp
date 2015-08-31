@@ -1,6 +1,6 @@
 {
   "name": "xgulp",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "xgulp is a front-end build tool for mxd",
   "main": "index.js",
   "scripts": {
@@ -25,27 +25,28 @@
     "bluebird": "^2.9.34",
     "del": "^1.2.0",
     "gulp": "^3.8.8",
+    "gulp-2x": "^0.0.1",
     "gulp-autoprefixer": "^2.3.1",
+    "gulp-cdn-upload": "^0.0.1",
     "gulp-file-upload": "^0.0.2",
     "gulp-font-spider": "^0.2.0",
+    "gulp-hbs-html": "^0.0.1",
+    "gulp-html-list": "^0.0.1",
     "gulp-if": "^1.2.5",
     "gulp-image-embed": "^0.0.2",
     "gulp-imagemin": "^2.2.1",
     "gulp-less": "^3.0.1",
+    "gulp-load-plugins": "^0.10.0",
     "gulp-minify-css": "^1.1.0",
     "gulp-plumber": "^1.0.1",
     "gulp-px2rem": "0.0.2",
+    "gulp-send-mail": "^0.0.1",
     "gulp-tmtsprite": "0.0.13",
     "gulp-util": "^3.0.6",
     "imagemin-pngquant": "4.0.0",
+    "run-sequence": "^1.1.2",
     "tree-kill": "^0.1.1",
     "vinyl-map": "^1.0.1",
-    "yargs": "^1.3.1",
-    "gulp-2x": "^0.0.1",
-    "gulp-load-plugins": "^0.10.0",
-    "gulp-cdn-upload": "^0.0.1",
-    "gulp-html-list": "^0.0.1",
-    "gulp-hbs-html": "^0.0.1",
-    "gulp-send-mail": "^0.0.1"
+    "yargs": "^1.3.1"
   }
 }

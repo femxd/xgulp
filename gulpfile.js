@@ -1,12 +1,11 @@
 'use strict';
 
-var username = "luoliang",
-    projectName = "test",
+var username = "allanyu",
+    projectName = "test1",
     domain = 'http://wapstatic.kf0309.3g.qq.com/';
 
 var enableConfig = {
-    px2rem: true, // 启用px转换为rem
-    imgresize: true // 启用从2x图生成1x图
+    px2rem: false // 启用px转换为rem
 };
 
 var gulp = require("gulp");
@@ -16,6 +15,7 @@ var path = require('path');
 var map = require('vinyl-map');
 var pngquant = require('imagemin-pngquant');
 var argv = require("yargs").argv;
+var runSeq = require('run-sequence').use(gulp);
 
 // plugins
 var del = require('del');
@@ -120,7 +120,7 @@ gulp.task('style', function () {
             include: ['base64']
         }))
         .pipe(autoprefixer('last 2 versions'))
-         .pipe(gulpif(isOptmized, minifyCss({advanced: true, compatibility: 'ie8', keepBreaks: false})))
+        .pipe(gulpif(isOptmized, minifyCss({advanced: true, compatibility: 'ie8', keepBreaks: false})))
         .pipe(gulpif(isOptmized, tmtsprite({
             margin: 0
         })))
@@ -167,26 +167,38 @@ gulp.task("fontreflow", function () {
     return gulp.src(xgulp.publishFonts).pipe(xgulp.fontDir);
 });
 
+/**
+ * 从2x图生成1x图
+ */
 gulp.task("imgresize", function () {
     return gulp.src(xgulp.img2xDir).pipe(imgresize({
         ratio: 0.5
     }));
 });
 
-var buildDepts = ['copy', 'style'];
-enableConfig.imgresize && buildDepts.push('imgresize');
 // 图片压缩现在有问题
 //isOptmized && buildDepts.splice.apply(buildDepts, [0, 0].concat(['spritemin']));
-useFont && buildDepts.push("fontspider");
-isUpload && buildDepts.push('upload');
 
-gulp.task('build', buildDepts, function () {
-    if (isWatch) {
-        gulp.watch(xgulp.copyFromAppDir, isUpload ? ['copy', 'upload'] : ['copy']);
-        gulp.watch(xgulp.styleFiles, isUpload ? ['style', 'upload'] : ['style']);
-        if (isUpload)
-            gutil.log("please open: " + (domain + "/" + username + "/" + projectName + "/<your html>"));
+gulp.task('watch', function () {
+    gulp.watch(xgulp.copyFromAppDir, isUpload ? ['copy', 'upload'] : ['copy']);
+    gulp.watch(xgulp.styleFiles, isUpload ? ['style', 'upload'] : ['style']);
+    if (isUpload)
+        gutil.log("please open: " + (domain + "/" + username + "/" + projectName + "/<your html>"));
+});
+
+gulp.task('build', function (callback) {
+    var seqs = ['clean'];
+    var secSeqs = ['copy', 'style'];
+    if (useFont) {
+        secSeqs.push('fontspider');
     }
+    seqs.push(secSeqs);
+    if (isUpload)
+        seqs.push('upload');
+    if (isWatch)
+        seqs.push('watch');
+    seqs.push(callback);
+    runSeq.apply(null, seqs);
 });
 
 gulp.task("cdn", ['build'], function () {
@@ -218,9 +230,10 @@ gulp.task("default", function () {
     var commander = "\n\r";
     commander += "Usage: gulp <command> \n\r\n\r";
     commander += "Commands: \n\r\n\r";
-    commander += "  build   构建本地项目, 上传文件到测试环境  \n\r";
-    commander += "  cdn     上传文件到CDN\n\r";
-    commander += "  mail    发送重构待确认邮件\n\r";
+    commander += "  build       构建本地项目, 上传文件到测试环境  \n\r";
+    commander += "  cdn         上传文件到CDN\n\r";
+    commander += "  mail        发送重构待确认邮件\n\r";
+    commander += "  imgresize   从2x图生成1x图片\n\r";
     commander += "\n\r\n\r";
 
     commander += "Options: \n\r\n\r";
