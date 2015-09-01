@@ -25,7 +25,7 @@ var imageEmbed = require('gulp-image-embed');
 var autoprefixer = require('gulp-autoprefixer');
 var minifyCss = require('gulp-minify-css');
 var tmtsprite = require('gulp-tmtsprite');
-var imagemin = require('gulp-imagemin');
+//var imagemin = require('gulp-imagemin');
 var fileUpload = require('gulp-file-upload');
 var fontSpider = require('gulp-font-spider');
 var imgresize = require('gulp-2x');
@@ -128,21 +128,21 @@ gulp.task('style', function () {
 });
 
 gulp.task('imgmin', ['copy', 'style'], function () {
-    return gulp.src('img/**')
-        .pipe(gulpif(isOptmized, imagemin({
-            // {quality: '80-90', speed: 4}
-            use: [pngquant()]
-        })))
-        .pipe(gulp.dest("publish/img"));
+    //return gulp.src('img/**')
+    //    .pipe(gulpif(isOptmized, imagemin({
+    //        // {quality: '80-90', speed: 4}
+    //        use: [pngquant()]
+    //    })))
+    //    .pipe(gulp.dest("publish/img"));
 });
 
 gulp.task('spritemin', ['copy', 'style'], function () {
-    return gulp.src("publish/sprite/**")
-        .pipe(gulpif(isOptmized, imagemin({
-            // {quality: '80-90', speed: 4}
-            use: [pngquant()]
-        })))
-        .pipe(gulp.dest('publish/sprite'));
+    //return gulp.src("publish/sprite/**")
+    //    .pipe(gulpif(isOptmized, imagemin({
+    //        // {quality: '80-90', speed: 4}
+    //        use: [pngquant()]
+    //    })))
+    //    .pipe(gulp.dest('publish/sprite'));
 });
 
 gulp.task('upload', ['copy', 'style'], function () {
