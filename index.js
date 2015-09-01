@@ -1,1 +1,1 @@
-console.log("hello xgulp");
+module.exports = require('./lib/xgulp');
