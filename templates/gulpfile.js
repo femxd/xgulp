@@ -13,7 +13,6 @@ var gulpif = require('gulp-if');
 var gutil = require('gulp-util');
 var path = require('path');
 var map = require('vinyl-map');
-var pngquant = require('imagemin-pngquant');
 var argv = require("yargs").argv;
 var runSeq = require('run-sequence').use(gulp);
 
@@ -26,6 +25,7 @@ var autoprefixer = require('gulp-autoprefixer');
 var minifyCss = require('gulp-minify-css');
 var tmtsprite = require('gulp-tmtsprite');
 //var imagemin = require('gulp-imagemin');
+//var pngquant = require('imagemin-pngquant');
 var fileUpload = require('gulp-file-upload');
 var fontSpider = require('gulp-font-spider');
 var imgresize = require('gulp-2x');

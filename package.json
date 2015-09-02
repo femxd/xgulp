@@ -1,6 +1,6 @@
 {
   "name": "xgulp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "xgulp is a front-end build tool for mxd",
   "main": "index.js",
   "scripts": {
@@ -45,7 +45,6 @@
     "gulp-send-mail": "^0.0.1",
     "gulp-tmtsprite": "0.0.13",
     "gulp-util": "^3.0.6",
-    "imagemin-pngquant": "4.0.0",
     "run-sequence": "^1.1.2",
     "tree-kill": "^0.1.1",
     "vinyl-map": "^1.0.1",
