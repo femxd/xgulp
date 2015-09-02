@@ -1,7 +1,7 @@
 'use strict';
 
-var username = "allanyu",
-    projectName = "test1",
+var username = "",
+    projectName = "",
     domain = 'http://wapstatic.kf0309.3g.qq.com/';
 
 var enableConfig = {
@@ -145,7 +145,7 @@ gulp.task('spritemin', ['copy', 'style'], function () {
     //    .pipe(gulp.dest('publish/sprite'));
 });
 
-gulp.task('upload', ['copy', 'style'], function () {
+gulp.task('upload', function () {
     return gulp.src(xgulp.publishFiles)
         .pipe(fileUpload({
             url: 'http://ued.wsd.com/receiver/receiver.php',
@@ -180,8 +180,14 @@ gulp.task("imgresize", function () {
 //isOptmized && buildDepts.splice.apply(buildDepts, [0, 0].concat(['spritemin']));
 
 gulp.task('watch', function () {
-    gulp.watch(xgulp.copyFromAppDir, isUpload ? ['copy', 'upload'] : ['copy']);
-    gulp.watch(xgulp.styleFiles, isUpload ? ['style', 'upload'] : ['style']);
+    gulp.watch(xgulp.copyFromAppDir, function (event) {
+        gutil.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
+        runSeq.apply(null, isUpload ? ['copy', 'upload'] : ['copy']);
+    });
+    gulp.watch(xgulp.styleFiles, function (event) {
+        gutil.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
+        runSeq.apply(null, isUpload ? ['style', 'upload'] : ['style']);
+    });
     if (isUpload)
         gutil.log("please open: " + (domain + "/" + username + "/" + projectName + "/<your html>"));
 });
@@ -231,9 +237,10 @@ gulp.task("default", function () {
     commander += "Usage: gulp <command> \n\r\n\r";
     commander += "Commands: \n\r\n\r";
     commander += "  build       构建本地项目, 上传文件到测试环境  \n\r";
+    commander += "  upload      上传文件到测试环境\n\r";
+    commander += "  resize      从2x图生成1x图片\n\r";
     commander += "  cdn         上传文件到CDN\n\r";
     commander += "  mail        发送重构待确认邮件\n\r";
-    commander += "  imgresize   从2x图生成1x图片\n\r";
     commander += "\n\r\n\r";
 
     commander += "Options: \n\r\n\r";
