@@ -23,7 +23,7 @@ var px2rem = require('gulp-px2rem');
 var imageEmbed = require('gulp-image-embed');
 var autoprefixer = require('gulp-autoprefixer');
 var minifyCss = require('gulp-minify-css');
-var tmtsprite = require('gulp-tmtsprite');
+var mxdsprite = require('gulp-mxdsprite');
 //var imagemin = require('gulp-imagemin');
 //var pngquant = require('imagemin-pngquant');
 var fileUpload = require('gulp-file-upload');
@@ -121,7 +121,7 @@ gulp.task('style', function () {
         }))
         .pipe(autoprefixer('last 2 versions'))
         .pipe(gulpif(isOptmized, minifyCss({advanced: true, compatibility: 'ie8', keepBreaks: false})))
-        .pipe(gulpif(isOptmized, tmtsprite({
+        .pipe(gulpif(isOptmized, mxdsprite({
             margin: 0
         })))
         .pipe(gulpif("*.png", gulp.dest(xgulp.spriteDest), gulp.dest(xgulp.cssDest)));
